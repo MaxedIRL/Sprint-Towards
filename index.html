@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Life RPG">
+<link rel="manifest" href="manifest.json">
+<title>Life RPG</title>
+<style>
+:root{--bg:#080c11;--panel:#111821;--panel2:#18222e;--line:#2a3542;--text:#eef3f8;--muted:#8c99a8;--gold:#e8bf59;--green:#69d59b;--blue:#72a9ff;--red:#e47777;--purple:#bb8cff}
+*{box-sizing:border-box}html,body{margin:0;background:radial-gradient(circle at top,#151d28 0,#080c11 52%);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}.app{max-width:780px;margin:auto;padding:env(safe-area-inset-top) 14px calc(84px + env(safe-area-inset-bottom))}
+header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-items:center}.title{font-size:25px;font-weight:850}.subtitle{font-size:12px;color:var(--muted)}button{font:inherit;font-weight:750;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}button.primary{background:#22392d;border-color:#3f6e51;color:#c7f3d5}button.gold{background:#3a301c;border-color:#705d2c;color:#f4d77b}button.danger{background:#351e20;border-color:#69383b;color:#f3a8aa}button:disabled{opacity:.35}
+.view{display:none}.view.active{display:block}.card{background:rgba(17,24,33,.96);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 10px 30px #0004}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}.label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.big{font-size:42px;font-weight:900;line-height:1.05}.goldtxt{color:var(--gold)}.greentxt{color:var(--green)}h2{font-size:18px;margin:2px 0 12px}.small{font-size:12px;color:var(--muted)}
+.bar{height:9px;background:#090d12;border:1px solid #27313d;border-radius:99px;overflow:hidden;margin:8px 0 6px}.fill{height:100%;background:linear-gradient(90deg,var(--green),#a8ebc2);transition:width .3s}
+.skillgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.skill{padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;cursor:pointer}.skilltop{display:flex;justify-content:space-between;gap:6px}.skillname{font-weight:800}.lv{color:var(--gold);font-weight:900}.quest,.activity,.bossrow,.achievement{border-top:1px solid var(--line);padding:12px 0}.quest:first-child,.activity:first-child,.bossrow:first-child,.achievement:first-child{border-top:0}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.qtext{flex:1}.qname{font-weight:750}.tag{font-size:11px;color:var(--muted);margin-top:2px}.xpplus{color:var(--green);font-weight:900}.boss{padding:14px;background:linear-gradient(135deg,#21192a,#15131e);border:1px solid #453351;border-radius:14px;margin-bottom:10px}.bossname{font-weight:900;font-size:17px}.bossmeta{color:#bda9ce;font-size:11px}.bossbar{height:12px;background:#0b0a0f;border-radius:99px;overflow:hidden;border:1px solid #3a2c43;margin:8px 0}.bossfill{height:100%;background:linear-gradient(90deg,#9d65d7,#d19cf5)}.formrow{display:grid;grid-template-columns:1fr 105px;gap:8px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}input,textarea,select{width:100%;background:#0c1219;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}textarea{min-height:135px;resize:vertical}
+.tabs{position:fixed;z-index:20;bottom:0;left:0;right:0;margin:auto;max-width:780px;background:rgba(8,12,17,.97);backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:7px max(7px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr)}.tab{border:0;background:none;color:var(--muted);font-size:10px;padding:6px 2px}.tab.active{color:var(--gold)}.ico{display:block;font-size:19px;margin-bottom:2px}
+.modal{position:fixed;z-index:30;inset:0;background:#0009;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px;width:100%;max-height:88vh;overflow:auto}.sheethead{display:flex;justify-content:space-between;align-items:center}
+.toast{position:fixed;z-index:40;left:50%;bottom:95px;transform:translate(-50%,20px);opacity:0;background:#17301f;border:1px solid #3d704f;color:#c8f3d4;border-radius:12px;padding:11px 15px;transition:.25s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
+.note{padding:10px;border:1px solid var(--line);border-radius:10px;background:#0d131b;font-size:12px;color:var(--muted);line-height:1.45}
+@media(min-width:620px){.skillgrid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="title">⚔️ Life RPG</div><div class="subtitle">Build your character in the real world.</div></div><button onclick="openSettings()">⚙️</button></header>
+
+<section id="home" class="view active">
+<div class="hero">
+ <div class="card"><div class="label">Total Level</div><div class="big goldtxt" id="totalLevel">1</div><div class="label" style="margin-top:13px">Total XP</div><div class="big" style="font-size:25px" id="totalXp">0</div></div>
+ <div class="card"><div class="label">Today's XP</div><div class="big greentxt" id="todayXp">0</div><div class="small" style="margin-top:13px">No streaks. No penalties. Progress is permanent.</div></div>
+</div>
+<div class="card"><h2>📊 Skills</h2><div class="skillgrid" id="homeSkills"></div></div>
+<div class="card"><h2>⚔️ Bosses</h2><div id="homeBosses"></div></div>
+<div class="card"><h2>📜 Today's Quests</h2><div id="homeQuests"></div></div>
+</section>
+
+<section id="skills" class="view">
+<div class="card"><h2>📊 Skills</h2><div class="skillgrid" id="skillsGrid"></div></div>
+<div class="card" id="skillDetail"><div class="empty">Tap a skill to inspect it.</div></div>
+</section>
+
+<section id="quests" class="view">
+<div class="card"><h2>📜 Quests</h2><div id="questList"></div></div>
+<div class="card"><h2>➕ Add Your Own Activity</h2><div class="formrow"><input id="customName" placeholder="What did you do?"><input id="customXp" type="number" min="1" placeholder="XP"></div><div style="margin-top:8px"><select id="customSkill"></select></div><div class="actions"><button class="primary" onclick="addCustom()">Add XP</button></div></div>
+</section>
+
+<section id="bosses" class="view">
+<div class="card"><h2>⚔️ Bosses</h2><div class="note">Bosses are larger real-life challenges. They don't need to be daily. Chip away at them when you want a bigger target than a normal quest.</div></div>
+<div id="bossList"></div>
+<div class="card"><h2>➕ Create a Boss</h2><input id="bossName" placeholder="e.g. Build the garden shed"><div class="two" style="margin-top:8px"><input id="bossGoal" type="number" min="100" placeholder="XP required"><select id="bossSkill"></select></div><div class="actions"><button class="gold" onclick="addBoss()">Create Boss</button></div></div>
+</section>
+
+<section id="diary" class="view">
+<div class="card"><h2>📖 Diary</h2><div class="small" id="diaryDate"></div><textarea id="diaryText" placeholder="Write anything about today..."></textarea><div class="actions"><button class="primary" onclick="saveDiary()">Save entry</button></div></div>
+<div class="card"><h2>Recent Entries</h2><div id="entries"></div></div>
+<div class="card"><h2>🏆 Achievements</h2><div id="achievements"></div></div>
+</section>
+</div>
+
+<nav class="tabs">
+<button class="tab active" data-view="home"><span class="ico">🏠</span>Home</button>
+<button class="tab" data-view="skills"><span class="ico">📊</span>Skills</button>
+<button class="tab" data-view="quests"><span class="ico">📜</span>Quests</button>
+<button class="tab" data-view="bosses"><span class="ico">⚔️</span>Bosses</button>
+<button class="tab" data-view="diary"><span class="ico">📖</span>Diary</button>
+</nav>
+
+<div class="modal" id="settingsModal"><div class="sheet"><div class="sheethead"><h2>⚙️ Settings & Backup</h2><button onclick="closeSettings()">✕</button></div>
+<p class="small">Your character data lives in this browser. Export a backup before making major changes or clearing Safari data.</p>
+<div class="actions"><button class="primary" onclick="exportData()">💾 Export Backup</button><button onclick="document.getElementById('importFile').click()">📥 Import Backup</button><input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)"></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+<div class="label">Character management</div><div class="actions"><button class="danger" onclick="resetData()">Reset character</button></div>
+</div></div>
+<div class="modal" id="levelModal"><div class="sheet"><div class="sheethead"><h2 id="levelTitle"></h2><button onclick="closeLevel()">✕</button></div><div id="levelBody"></div></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const SKILLS=[
+ ["Fitness","💪"],["Family Time","❤️"],["DIY & Home Projects","🔨"],["Cooking & Food Prep","🍳"],
+ ["Personal Goals","🎯"],["Learning","🧠"],["Career","💼"],["Finance","💰"],["Social","🤝"],["Creativity","🎨"],["Life Admin","🧹"]
+];
+const DEFAULT_QUESTS=[
+ ["Workout / meaningful movement","Fitness",150],
+ ["Quality family time","Family Time",150],
+ ["Work on a DIY or home project","DIY & Home Projects",150],
+ ["Cook or prep food","Cooking & Food Prep",100],
+ ["Make progress on a personal goal","Personal Goals",150],
+ ["25 minutes focused learning","Learning",100],
+ ["One useful career action","Career",100],
+ ["Review or track an expense","Finance",50],
+ ["Meaningful social contact","Social",50],
+ ["Creative practice","Creativity",100],
+ ["One useful admin task","Life Admin",50]
+];
+const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
+let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
+ version:2,skills:blank,activities:[],diary:{},done:{},achievements:[],
+ bosses:[
+  {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
+  {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
+  {id:"b3",name:"Master Your Kitchen",skill:"Cooking & Food Prep",goal:2500,progress:0}
+ ]
+};
+function today(){return new Date().toISOString().slice(0,10)}
+function xpForLevel(l){return l<=1?0:Math.floor(100*Math.pow(l-1,2.1))}
+function level(x){let l=1;while(x>=xpForLevel(l+1))l++;return l}
+function totalXp(){return SKILLS.reduce((n,[s])=>n+state.skills[s].xp,0)}
+function totalLevel(){return Math.floor(SKILLS.reduce((n,[s])=>n+level(state.skills[s].xp),0)/SKILLS.length)}
+function save(){localStorage.setItem("lifeRPGBest",JSON.stringify(state))}
+function ensure(){if(!state.done[today()])state.done[today()]=[];save()}
+function skillCard(s,icon){let x=state.skills[s].xp,l=level(x),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(x-prev)/(next-prev)*100);return `<div class="skill" onclick="showSkill('${esc(s)}')"><div class="skilltop"><span class="skillname">${icon} ${esc(s)}</span><span class="lv">Lv ${l}</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${x.toLocaleString()} / ${next.toLocaleString()} XP</div></div>`}
+function render(){ensure();document.getElementById("totalLevel").textContent=totalLevel();document.getElementById("totalXp").textContent=totalXp().toLocaleString();document.getElementById("todayXp").textContent=state.activities.filter(a=>a.date===today()).reduce((n,a)=>n+a.xp,0).toLocaleString();let cards=SKILLS.map(([s,i])=>skillCard(s,i)).join("");document.getElementById("homeSkills").innerHTML=cards;document.getElementById("skillsGrid").innerHTML=cards;fillSelects();renderQuests();renderBosses();renderDiary();checkAchievements();save()}
+function fillSelects(){document.getElementById("customSkill").innerHTML=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("");document.getElementById("bossSkill").innerHTML=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("")}
+function renderQuests(){let qs=DEFAULT_QUESTS;let done=state.done[today()]||[];let html=qs.map((q,i)=>`<div class="quest"><div class="qtext"><div class="qname">${esc(q[0])}</div><div class="tag">${esc(q[1])} • +${q[2]} XP</div></div><button class="primary" onclick="completeQuest(${i})" ${done.includes(i)?"disabled":""}>${done.includes(i)?"Done":"Complete"}</button></div>`).join("");document.getElementById("homeQuests").innerHTML=qs.slice(0,5).map((q,i)=>`<div class="quest"><div class="qtext"><div class="qname">${esc(q[0])}</div><div class="tag">${esc(q[1])} • +${q[2]} XP</div></div><button class="primary" onclick="completeQuest(${i})" ${done.includes(i)?"disabled":""}>${done.includes(i)?"Done":"Complete"}</button></div>`).join("");document.getElementById("questList").innerHTML=html}
+function completeQuest(i){let done=state.done[today()]||[];if(done.includes(i))return;let q=DEFAULT_QUESTS[i];addXp(q[1],q[2],q[0]);done.push(i);state.done[today()]=done;save();render();toast("+"+q[2]+" XP • "+q[1])}
+function addCustom(){let n=document.getElementById("customName").value.trim(),x=Number(document.getElementById("customXp").value),s=document.getElementById("customSkill").value;if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);document.getElementById("customName").value="";document.getElementById("customXp").value="";render();toast("+"+x+" XP • "+s)}
+function addXp(skill,xp,name){xp=Number(xp);state.skills[skill].xp+=xp;state.skills[skill].history.unshift({date:today(),name,xp});state.activities.unshift({date:today(),name,skill,xp});state.bosses.forEach(b=>{if(b.skill===skill&&b.progress<b.goal)b.progress=Math.min(b.goal,b.progress+xp)});checkAchievements();save()}
+function showSkill(s){let d=state.skills[s],l=level(d.xp),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(d.xp-prev)/(next-prev)*100);let icon=SKILLS.find(x=>x[0]===s)?.[1]||"⭐";document.getElementById("skillDetail").innerHTML=`<h2>${icon} ${esc(s)}</h2><div class="row"><b style="font-size:28px">Level ${l}</b><span class="goldtxt">${d.xp.toLocaleString()} XP</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${Math.max(0,next-d.xp).toLocaleString()} XP to Level ${l+1}</div><div style="margin-top:14px"><div class="label">Add activity</div><div class="formrow" style="margin-top:7px"><input id="skillName" placeholder="What did you do?"><input id="skillXp" type="number" min="1" placeholder="XP"></div><div class="actions"><button class="primary" onclick="addFromSkill('${esc(s)}')">+ Add XP</button></div></div><div style="margin-top:14px"><div class="label">Recent XP</div>${d.history.slice(0,12).map(h=>`<div class="activity"><div class="row"><span>${esc(h.name)}</span><span class="xpplus">+${h.xp}</span></div><div class="small">${h.date}</div></div>`).join("")||'<div class="small">No activity yet.</div>'}</div>`}
+function addFromSkill(s){let n=document.getElementById("skillName").value.trim(),x=Number(document.getElementById("skillXp").value);if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);render();showSkill(s);toast("+"+x+" XP • "+s)}
+function renderBosses(){let html=state.bosses.map(b=>{let pct=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><div><div class="bossname">⚔️ ${esc(b.name)}</div><div class="bossmeta">${esc(b.skill)} • ${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><b class="goldtxt">${Math.round(pct)}%</b></div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div class="actions">${b.progress>=b.goal?'<button class="gold" disabled>🏆 Defeated</button>':'<button class="primary" onclick="openBoss(\''+esc(b.id)+'\')">View Boss</button>'}</div></div>`}).join("");document.getElementById("bossList").innerHTML=html||'<div class="card"><div class="small">No bosses yet.</div></div>';document.getElementById("homeBosses").innerHTML=state.bosses.slice(0,3).map(b=>{let p=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><b>⚔️ ${esc(b.name)}</b><span>${Math.round(p)}%</span></div><div class="bossbar"><div class="bossfill" style="width:${p}%"></div></div><div class="bossmeta">${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div>`}).join("")}
+function addBoss(){let n=document.getElementById("bossName").value.trim(),g=Number(document.getElementById("bossGoal").value),s=document.getElementById("bossSkill").value;if(!n||g<100)return toast("Give your boss a name and at least 100 XP");state.bosses.push({id:"b"+Date.now(),name:n,skill:s,goal:g,progress:0});document.getElementById("bossName").value="";document.getElementById("bossGoal").value="";save();render();toast("Boss created")}
+function openBoss(id){let b=state.bosses.find(x=>x.id===id);if(!b)return;document.getElementById("levelTitle").textContent="⚔️ "+b.name;let pct=Math.min(100,b.progress/b.goal*100);document.getElementById("levelBody").innerHTML=`<div class="boss"><div class="bossmeta">${esc(b.skill)}</div><div class="big goldtxt" style="font-size:34px">${Math.round(pct)}%</div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div>${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><div class="note">Any XP you earn in <b>${esc(b.skill)}</b> also damages this boss. The boss is defeated when the bar reaches 100%.</div>`;document.getElementById("levelModal").classList.add("show")}
+function closeLevel(){document.getElementById("levelModal").classList.remove("show")}
+function saveDiary(){let t=document.getElementById("diaryText").value.trim();if(!t)return toast("Write something first");state.diary[today()]=t;save();renderDiary();toast("Diary entry saved")}
+function renderDiary(){let d=today();document.getElementById("diaryDate").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"});document.getElementById("diaryText").value=state.diary[d]||"";let ds=Object.keys(state.diary).sort().reverse();document.getElementById("entries").innerHTML=ds.length?ds.slice(0,20).map(x=>`<div class="activity"><b>${new Date(x+"T12:00:00").toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}</b><div style="white-space:pre-wrap;margin-top:6px">${esc(state.diary[x])}</div></div>`).join(""):'<div class="small">Your diary is empty.</div>';document.getElementById("achievements").innerHTML=(state.achievements||[]).map(a=>`<div class="achievement">🏆 ${esc(a)}</div>`).join("")||'<div class="small">Your first achievement is waiting.</div>'}
+function checkAchievements(){state.achievements=state.achievements||[];[[500,"First 500 XP"],[1000,"First 1,000 XP"],[5000,"First 5,000 XP"],[10000,"First 10,000 XP"]].forEach(([n,t])=>{if(totalXp()>=n&&!state.achievements.includes(t))state.achievements.push(t)});state.bosses.forEach(b=>{if(b.progress>=b.goal){let t="Boss defeated: "+b.name;if(!state.achievements.includes(t))state.achievements.push(t)}})}
+function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="life-rpg-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);toast("Backup exported")}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d.skills||!d.activities||!d.diary)throw 0;state=d;save();render();toast("Backup restored")}catch{toast("That backup is not valid")}};r.readAsText(f)}
+function openSettings(){document.getElementById("settingsModal").classList.add("show")}function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
+function resetData(){if(confirm("Reset your entire character and diary? This cannot be undone unless you have a backup.")){localStorage.removeItem("lifeRPGBest");location.reload()}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toast(t){let e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1700)}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.view).classList.add("active");scrollTo(0,0)});
+ensure();render();
+</script>
+</body>
+</html>
