@@ -45,8 +45,14 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 </section>
 
 <section id="quests" class="view">
-<div class="card"><h2>📜 Quests</h2><div id="questList"></div></div>
-<div class="card"><h2>➕ Add Your Own Activity</h2><div class="formrow"><input id="customName" placeholder="What did you do?"><input id="customXp" type="number" min="1" placeholder="XP"></div><div style="margin-top:8px"><select id="customSkill"></select></div><div class="actions"><button class="primary" onclick="addCustom()">Add XP</button></div></div>
+<div class="card"><h2>📜 Quests & To-Dos</h2><div class="note">Create tasks before you do them. XP is only awarded when you mark the task complete.</div><div id="questList"></div></div>
+<div class="card"><h2>➕ Create a To-Do</h2>
+<input id="todoName" placeholder="e.g. Paint the spare room">
+<div class="two" style="margin-top:8px"><select id="todoSkill"></select><input id="todoXp" type="number" min="1" placeholder="XP reward"></div>
+<div class="actions"><button class="primary" onclick="addTodo()">Add To-Do</button></div>
+</div>
+<div class="card"><h2>⚡ Quick XP</h2><div class="small">For things you already completed and don't need to track as a to-do first.</div>
+<div class="formrow" style="margin-top:8px"><input id="customName" placeholder="What did you do?"><input id="customXp" type="number" min="1" placeholder="XP"></div><div style="margin-top:8px"><select id="customSkill"></select></div><div class="actions"><button class="primary" onclick="addCustom()">Add XP</button></div></div>
 </section>
 
 <section id="bosses" class="view">
@@ -99,7 +105,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:2,skills:blank,activities:[],diary:{},done:{},achievements:[],
+ version:3,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -110,13 +116,45 @@ function today(){return new Date().toISOString().slice(0,10)}
 function xpForLevel(l){return l<=1?0:Math.floor(100*Math.pow(l-1,2.1))}
 function level(x){let l=1;while(x>=xpForLevel(l+1))l++;return l}
 function totalXp(){return SKILLS.reduce((n,[s])=>n+state.skills[s].xp,0)}
-function totalLevel(){return Math.floor(SKILLS.reduce((n,[s])=>n+level(state.skills[s].xp),0)/SKILLS.length)}
+function totalLevel(){return SKILLS.reduce((n,[s])=>n+level(state.skills[s].xp),0)}
 function save(){localStorage.setItem("lifeRPGBest",JSON.stringify(state))}
-function ensure(){if(!state.done[today()])state.done[today()]=[];save()}
+function ensure(){if(!state.done[today()])state.done[today()]=[];if(!state.todos)state.todos=[];save()}
 function skillCard(s,icon){let x=state.skills[s].xp,l=level(x),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(x-prev)/(next-prev)*100);return `<div class="skill" onclick="showSkill('${esc(s)}')"><div class="skilltop"><span class="skillname">${icon} ${esc(s)}</span><span class="lv">Lv ${l}</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${x.toLocaleString()} / ${next.toLocaleString()} XP</div></div>`}
 function render(){ensure();document.getElementById("totalLevel").textContent=totalLevel();document.getElementById("totalXp").textContent=totalXp().toLocaleString();document.getElementById("todayXp").textContent=state.activities.filter(a=>a.date===today()).reduce((n,a)=>n+a.xp,0).toLocaleString();let cards=SKILLS.map(([s,i])=>skillCard(s,i)).join("");document.getElementById("homeSkills").innerHTML=cards;document.getElementById("skillsGrid").innerHTML=cards;fillSelects();renderQuests();renderBosses();renderDiary();checkAchievements();save()}
-function fillSelects(){document.getElementById("customSkill").innerHTML=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("");document.getElementById("bossSkill").innerHTML=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("")}
-function renderQuests(){let qs=DEFAULT_QUESTS;let done=state.done[today()]||[];let html=qs.map((q,i)=>`<div class="quest"><div class="qtext"><div class="qname">${esc(q[0])}</div><div class="tag">${esc(q[1])} • +${q[2]} XP</div></div><button class="primary" onclick="completeQuest(${i})" ${done.includes(i)?"disabled":""}>${done.includes(i)?"Done":"Complete"}</button></div>`).join("");document.getElementById("homeQuests").innerHTML=qs.slice(0,5).map((q,i)=>`<div class="quest"><div class="qtext"><div class="qname">${esc(q[0])}</div><div class="tag">${esc(q[1])} • +${q[2]} XP</div></div><button class="primary" onclick="completeQuest(${i})" ${done.includes(i)?"disabled":""}>${done.includes(i)?"Done":"Complete"}</button></div>`).join("");document.getElementById("questList").innerHTML=html}
+function fillSelects(){let opts=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("");document.getElementById("customSkill").innerHTML=opts;document.getElementById("todoSkill").innerHTML=opts;document.getElementById("bossSkill").innerHTML=opts}
+function renderQuests(){
+ let done=state.done[today()]||[];
+ let defaults=DEFAULT_QUESTS.map((q,i)=>({name:q[0],skill:q[1],xp:q[2],kind:"daily",idx:i,done:done.includes(i)}));
+ let todos=state.todos.map(t=>({...t,kind:"todo",done:t.completed}));
+ let rows=defaults.concat(todos);
+ let html=rows.map((q,i)=>{
+   let button=q.done
+     ? `<button disabled>${q.kind==="todo"?"Completed":"Done"}</button>`
+     : `<button class="primary" onclick="completeQuestRow(${i})">Complete</button>`;
+   return `<div class="quest"><div class="qtext"><div class="qname">${q.kind==="todo"?"⬜ ":""}${esc(q.name)}</div><div class="tag">${esc(q.skill)} • +${q.xp} XP${q.kind==="todo"?" • To-Do":""}</div></div>${button}</div>`;
+ }).join("");
+ document.getElementById("questList").innerHTML=html||'<div class="small">No quests yet.</div>';
+ let home=defaults.slice(0,5);
+ document.getElementById("homeQuests").innerHTML=home.map((q,i)=>`<div class="quest"><div class="qtext"><div class="qname">${esc(q.name)}</div><div class="tag">${esc(q.skill)} • +${q.xp} XP</div></div><button class="primary" onclick="completeQuest(${i})" ${q.done?"disabled":""}>${q.done?"Done":"Complete"}</button></div>`).join("");
+}
+function addTodo(){
+ let n=document.getElementById("todoName").value.trim(), x=Number(document.getElementById("todoXp").value), s=document.getElementById("todoSkill").value;
+ if(!n||x<1)return toast("Give the to-do a name and XP reward");
+ state.todos.unshift({id:"t"+Date.now(),name:n,skill:s,xp:x,completed:false,created:today(),completedDate:null});
+ document.getElementById("todoName").value="";document.getElementById("todoXp").value="";
+ save();render();toast("To-do added");
+}
+function completeQuestRow(i){
+ let done=state.done[today()]||[];
+ let defaults=DEFAULT_QUESTS.map((q,idx)=>({name:q[0],skill:q[1],xp:q[2],kind:"daily",idx,done:done.includes(idx)}));
+ let rows=defaults.concat(state.todos.map(t=>({...t,kind:"todo",done:t.completed})));
+ let q=rows[i]; if(!q||q.done)return;
+ if(q.kind==="daily"){completeQuest(q.idx);return}
+ let todo=state.todos.find(t=>t.id===q.id);if(!todo||todo.completed)return;
+ addXp(todo.skill,todo.xp,todo.name);
+ todo.completed=true;todo.completedDate=today();
+ save();render();toast("+"+todo.xp+" XP • "+todo.skill);
+}
 function completeQuest(i){let done=state.done[today()]||[];if(done.includes(i))return;let q=DEFAULT_QUESTS[i];addXp(q[1],q[2],q[0]);done.push(i);state.done[today()]=done;save();render();toast("+"+q[2]+" XP • "+q[1])}
 function addCustom(){let n=document.getElementById("customName").value.trim(),x=Number(document.getElementById("customXp").value),s=document.getElementById("customSkill").value;if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);document.getElementById("customName").value="";document.getElementById("customXp").value="";render();toast("+"+x+" XP • "+s)}
 function addXp(skill,xp,name){xp=Number(xp);state.skills[skill].xp+=xp;state.skills[skill].history.unshift({date:today(),name,xp});state.activities.unshift({date:today(),name,skill,xp});state.bosses.forEach(b=>{if(b.skill===skill&&b.progress<b.goal)b.progress=Math.min(b.goal,b.progress+xp)});checkAchievements();save()}
