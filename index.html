@@ -87,12 +87,15 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 
 <script>
 const SKILLS=[
- ["Fitness","💪"],["Family Time","❤️"],["DIY & Home Projects","🔨"],["Cooking & Food Prep","🍳"],
+ ["Fitness","💪"],["Family Time","❤️"],["Chores","🧹"],["DIY & Home Projects","🔨"],["Cooking & Food Prep","🍳"],
  ["Personal Goals","🎯"],["Learning","🧠"],["Career","💼"],["Finance","💰"],["Social","🤝"],["Creativity","🎨"],["Life Admin","🧹"]
 ];
 const DEFAULT_QUESTS=[
  ["Workout / meaningful movement","Fitness",150],
  ["Quality family time","Family Time",150],
+ ["Do the dishes / reset the kitchen","Chores",25],
+ ["Laundry","Chores",50],
+ ["Vacuum / clean a room","Chores",75],
  ["Work on a DIY or home project","DIY & Home Projects",150],
  ["Cook or prep food","Cooking & Food Prep",100],
  ["Make progress on a personal goal","Personal Goals",150],
@@ -105,7 +108,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:4,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:5,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -118,7 +121,14 @@ function level(x){let l=1;while(x>=xpForLevel(l+1))l++;return l}
 function totalXp(){return SKILLS.reduce((n,[s])=>n+state.skills[s].xp,0)}
 function totalLevel(){return SKILLS.reduce((n,[s])=>n+level(state.skills[s].xp),0)}
 function save(){localStorage.setItem("lifeRPGBest",JSON.stringify(state))}
-function ensure(){if(!state.done[today()])state.done[today()]=[];if(!state.todos)state.todos=[];if(!state.disabledDefaults)state.disabledDefaults=[];save()}
+function ensure(){
+ if(!state.done[today()])state.done[today()]=[];
+ if(!state.todos)state.todos=[];
+ if(!state.disabledDefaults)state.disabledDefaults=[];
+ if(!state.skills)state.skills={};
+ SKILLS.forEach(([s])=>{if(!state.skills[s])state.skills[s]={xp:0,history:[]}});
+ save();
+}
 function skillCard(s,icon){let x=state.skills[s].xp,l=level(x),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(x-prev)/(next-prev)*100);return `<div class="skill" onclick="showSkill('${esc(s)}')"><div class="skilltop"><span class="skillname">${icon} ${esc(s)}</span><span class="lv">Lv ${l}</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${x.toLocaleString()} / ${next.toLocaleString()} XP</div></div>`}
 function render(){ensure();document.getElementById("totalLevel").textContent=totalLevel();document.getElementById("totalXp").textContent=totalXp().toLocaleString();document.getElementById("todayXp").textContent=state.activities.filter(a=>a.date===today()).reduce((n,a)=>n+a.xp,0).toLocaleString();let cards=SKILLS.map(([s,i])=>skillCard(s,i)).join("");document.getElementById("homeSkills").innerHTML=cards;document.getElementById("skillsGrid").innerHTML=cards;fillSelects();renderQuests();renderBosses();renderDiary();checkAchievements();save()}
 function fillSelects(){let opts=SKILLS.map(([s])=>`<option>${esc(s)}</option>`).join("");document.getElementById("customSkill").innerHTML=opts;document.getElementById("todoSkill").innerHTML=opts;document.getElementById("bossSkill").innerHTML=opts}
