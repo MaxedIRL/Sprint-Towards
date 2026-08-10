@@ -87,8 +87,9 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 
 <script>
 const SKILLS=[
- ["Fitness","💪"],["Family Time","❤️"],["Chores","🧹"],["DIY & Home Projects","🔨"],["Cooking & Food Prep","🍳"],
- ["Personal Goals","🎯"],["Learning","🧠"],["Career","💼"],["Finance","💰"],["Social","🤝"],["Creativity","🎨"],["Life Admin","🧹"]
+ ["Fitness","💪"],["Family Time","❤️"],["Chores","🧹"],["DIY & Home Projects","🔨"],
+ ["Cooking & Food Prep","🍳"],["Personal Goals","🎯"],["Learning","🧠"],["Career","💼"],
+ ["Finance","💰"],["Social","🤝"]
 ];
 const DEFAULT_QUESTS=[
  ["Workout / meaningful movement","Fitness",150],
@@ -102,13 +103,11 @@ const DEFAULT_QUESTS=[
  ["25 minutes focused learning","Learning",100],
  ["One useful career action","Career",100],
  ["Review or track an expense","Finance",50],
- ["Meaningful social contact","Social",50],
- ["Creative practice","Creativity",100],
- ["One useful admin task","Life Admin",50]
+ ["Meaningful social contact","Social",50]
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:5,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:6,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -126,6 +125,14 @@ function ensure(){
  if(!state.todos)state.todos=[];
  if(!state.disabledDefaults)state.disabledDefaults=[];
  if(!state.skills)state.skills={};
+ if(!state.legacySkills)state.legacySkills={};
+ ["Creativity","Life Admin"].forEach(s=>{
+   if(state.skills[s]){
+     state.legacySkills[s]=state.skills[s];
+     delete state.skills[s];
+   }
+ });
+ state.todos=state.todos.filter(t=>t.skill!=="Creativity"&&t.skill!=="Life Admin");
  SKILLS.forEach(([s])=>{if(!state.skills[s])state.skills[s]={xp:0,history:[]}});
  save();
 }
