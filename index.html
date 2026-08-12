@@ -115,7 +115,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:9,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:10,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -217,25 +217,31 @@ function renderBosses(){
  let html=state.bosses.map(b=>{
    if(b.type==="time"){
      let st=timeBossStatus(b);
+     let action=b.status==="completed"
+       ? '<button class="gold" disabled>🏆 Completed</button>'
+       : (today()>b.end
+          ? `<button class="gold" onclick="completeTimeBoss('${esc(b.id)}')">🏆 Mark Completed</button>`
+          : '<button class="primary" disabled>In progress</button>');
      return `<div class="boss">
        <div class="row"><div><div class="bossname">📅 ${esc(b.name)}</div><div class="bossmeta">${formatDate(b.start)} → ${formatDate(b.end)}</div></div><b class="goldtxt">${Math.round(st.pct)}%</b></div>
        <div class="bossbar"><div class="bossfill" style="width:${st.pct}%"></div></div>
        <div class="small" style="margin-top:5px">${esc(st.label)}</div>
-       <div class="actions">
-         ${b.status==="completed"?'<button class="gold" disabled>🏆 Completed</button>':b.status==="failed"?'<button class="danger" disabled>❌ Failed</button>':(today()>b.end?'<button class="gold" onclick="completeTimeBoss(\\''+esc(b.id)+'\\')">🏆 Mark Completed</button>':'<button class="primary" disabled>In progress</button>')}
-         <button onclick="editBoss(\\''+esc(b.id)+'\\')">✏️ Edit</button>
-         <button class="danger" onclick="deleteBoss(\\''+esc(b.id)+'\\')">🗑️ Delete</button>
+       <div class="actions">${action}
+         <button onclick="editBoss('${esc(b.id)}')">✏️ Edit</button>
+         <button class="danger" onclick="deleteBoss('${esc(b.id)}')">🗑️ Delete</button>
        </div>
      </div>`;
    }
    let p=Math.min(100,b.progress/b.goal*100);
+   let action=b.progress>=b.goal
+     ? '<button class="gold" disabled>🏆 Defeated</button>'
+     : `<button class="primary" onclick="openBoss('${esc(b.id)}')">View Boss</button>`;
    return `<div class="boss">
      <div class="row"><div><div class="bossname">⚔️ ${esc(b.name)}</div><div class="bossmeta">${esc(b.skill)} • ${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><b class="goldtxt">${Math.round(p)}%</b></div>
      <div class="bossbar"><div class="bossfill" style="width:${p}%"></div></div>
-     <div class="actions">
-       ${b.progress>=b.goal?'<button class="gold" disabled>🏆 Defeated</button>':'<button class="primary" onclick="openBoss(\\''+esc(b.id)+'\\')">View Boss</button>'}
-       <button onclick="editBoss(\\''+esc(b.id)+'\\')">✏️ Edit</button>
-       <button class="danger" onclick="deleteBoss(\\''+esc(b.id)+'\\')">🗑️ Delete</button>
+     <div class="actions">${action}
+       <button onclick="editBoss('${esc(b.id)}')">✏️ Edit</button>
+       <button class="danger" onclick="deleteBoss('${esc(b.id)}')">🗑️ Delete</button>
      </div>
    </div>`;
  }).join("");
@@ -261,17 +267,26 @@ function editBoss(id){
  let b=state.bosses.find(x=>x.id===id);if(!b)return;
  let type=b.type||"xp";
  document.getElementById("levelTitle").textContent="✏️ Edit Boss";
- let body='<div class="label">Boss name</div><input id="editBossName" type="text" value="'+esc(b.name)+'" style="margin-top:7px">'+
- '<div class="label" style="margin-top:12px">Boss type</div><select id="editBossType" onchange="toggleBossEditType()" style="margin-top:7px"><option value="xp" '+(type==="xp"?"selected":"")+'>⚔️ XP Boss</option><option value="time" '+(type==="time"?"selected":"")+'>📅 Time Boss</option></select>';
- body+='<div id="editXpFields" class="two" style="margin-top:10px;display:'+(type==="xp"?"grid":"none")+'"><div><div class="label">XP goal</div><input id="editBossGoal" type="number" min="100" step="50" value="'+(b.goal||1000)+'" style="margin-top:7px"></div><div><div class="label">Contributing skill</div><select id="editBossSkill" style="margin-top:7px">'+SKILLS.map(([s])=>'<option value="'+esc(s)+'" '+(s===b.skill?'selected':'')+'>'+esc(s)+'</option>').join("")+'</select></div></div>';
- body+='<div id="editTimeFields" style="margin-top:10px;display:'+(type==="time"?"block":"none")+'"><div class="two"><div><div class="label">Start date</div><input id="editBossStart" type="date" value="'+(b.start||today())+'"></div><div><div class="label">End date</div><input id="editBossEnd" type="date" value="'+(b.end||today())+'"></div></div><div class="note" style="margin-top:9px">Example: start Monday 10 August, end Sunday 6 September.</div></div>';
- body+='<div class="note" style="margin-top:12px">Current progress is preserved. For a time boss, completion is recorded when the end date has passed.</div><div class="actions"><button class="primary" onclick="saveBossEdit(\\''+esc(id)+'\\')">Save changes</button><button onclick="closeLevel()">Cancel</button></div>';
- document.getElementById("levelBody").innerHTML=body;document.getElementById("levelModal").classList.add("show");
-}
-function toggleBossEditType(){
- let t=document.getElementById("editBossType").value;
- document.getElementById("editXpFields").style.display=t==="xp"?"grid":"none";
- document.getElementById("editTimeFields").style.display=t==="time"?"block":"none";
+ let body=`<div class="label">Boss name</div>
+ <input id="editBossName" type="text" value="${esc(b.name)}" style="margin-top:7px">
+ <div class="label" style="margin-top:12px">Boss type</div>
+ <select id="editBossType" onchange="toggleBossEditType()" style="margin-top:7px">
+   <option value="xp" ${type==="xp"?"selected":""}>⚔️ XP Boss</option>
+   <option value="time" ${type==="time"?"selected":""}>📅 Time Boss</option>
+ </select>
+ <div id="editXpFields" class="two" style="margin-top:10px;display:${type==="xp"?"grid":"none"}">
+   <div><div class="label">XP goal</div><input id="editBossGoal" type="number" min="100" step="50" value="${b.goal||1000}" style="margin-top:7px"></div>
+   <div><div class="label">Contributing skill</div><select id="editBossSkill" style="margin-top:7px">${SKILLS.map(([s])=>`<option value="${esc(s)}" ${s===b.skill?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+ </div>
+ <div id="editTimeFields" style="margin-top:10px;display:${type==="time"?"block":"none"}">
+   <div class="two"><div><div class="label">Start date</div><input id="editBossStart" type="date" value="${b.start||today()}"></div>
+   <div><div class="label">End date</div><input id="editBossEnd" type="date" value="${b.end||today()}"></div></div>
+   <div class="note" style="margin-top:9px">Example: start Monday 10 August, end Sunday 6 September.</div>
+ </div>
+ <div class="note" style="margin-top:12px">Current progress is preserved. For a time boss, completion is recorded when the end date has passed.</div>
+ <div class="actions"><button class="primary" onclick="saveBossEdit('${esc(id)}')">Save changes</button><button onclick="closeLevel()">Cancel</button></div>`;
+ document.getElementById("levelBody").innerHTML=body;
+ document.getElementById("levelModal").classList.add("show");
 }
 function saveBossEdit(id){
  let b=state.bosses.find(x=>x.id===id);if(!b)return;
