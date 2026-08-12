@@ -64,6 +64,7 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 <div id="xpBossFields" class="two" style="margin-top:8px"><input id="bossGoal" type="number" min="100" placeholder="XP required"><select id="bossSkill"></select></div>
 <div id="timeBossFields" style="display:none;margin-top:8px">
  <div class="two"><div><div class="label">Start date</div><input id="bossStart" type="date"></div><div><div class="label">End date</div><input id="bossEnd" type="date"></div></div>
+ <div style="margin-top:8px"><div class="label">XP reward on completion</div><input id="bossTimeXp" type="number" min="1" step="25" placeholder="e.g. 1000"></div>
  <div class="note" style="margin-top:9px">Use a time boss for something you need to maintain until a specific date. Example: “No absences — week commencing 10 August”.</div>
 </div>
 <div class="actions"><button class="gold" onclick="addBoss()">Create Boss</button></div></div>
@@ -115,7 +116,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:10,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:11,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -130,7 +131,7 @@ function totalLevel(){return SKILLS.reduce((n,[s])=>n+level(state.skills[s].xp),
 function save(){localStorage.setItem("lifeRPGBest",JSON.stringify(state))}
 function ensure(){
  let legacyPresetIds=["b1","b2","b3"];
- if(state.bosses)state.bosses.forEach(b=>{if(!b.type)b.type="xp";});
+ if(state.bosses)state.bosses.forEach(b=>{if(!b.type)b.type="xp";if(b.type==="time"&&!b.rewardXp)b.rewardXp=1000;});
 
  if(!state.done[today()])state.done[today()]=[];
  if(!state.todos)state.todos=[];
@@ -223,7 +224,7 @@ function renderBosses(){
           ? `<button class="gold" onclick="completeTimeBoss('${esc(b.id)}')">🏆 Mark Completed</button>`
           : '<button class="primary" disabled>In progress</button>');
      return `<div class="boss">
-       <div class="row"><div><div class="bossname">📅 ${esc(b.name)}</div><div class="bossmeta">${formatDate(b.start)} → ${formatDate(b.end)}</div></div><b class="goldtxt">${Math.round(st.pct)}%</b></div>
+       <div class="row"><div><div class="bossname">📅 ${esc(b.name)}</div><div class="bossmeta">${formatDate(b.start)} → ${formatDate(b.end)} • +${(b.rewardXp||0).toLocaleString()} XP on completion</div></div><b class="goldtxt">${Math.round(st.pct)}%</b></div>
        <div class="bossbar"><div class="bossfill" style="width:${st.pct}%"></div></div>
        <div class="small" style="margin-top:5px">${esc(st.label)}</div>
        <div class="actions">${action}
@@ -259,8 +260,16 @@ function toggleBossCreateType(){
 function completeTimeBoss(id){
  let b=state.bosses.find(x=>x.id===id);if(!b)return;
  if(today()<b.end)return toast("This boss has not reached its end date yet");
- if(confirm("Mark this time boss as completed? This records that you achieved the goal for the full period.")){
-   b.status="completed";save();render();toast("🏆 Time boss completed");
+ if(confirm("Mark this time boss as completed and award "+(b.rewardXp||0).toLocaleString()+" XP?")){
+   b.status="completed";
+   let reward=Number(b.rewardXp)||0;
+   if(!b.rewardAwarded && reward>0){
+     let rewardSkill=b.skill||"Personal Goals";
+     if(!state.skills[rewardSkill])rewardSkill="Personal Goals";
+     addXp(rewardSkill,reward,b.name+" — Boss completion");
+     b.rewardAwarded=true;
+   }
+   save();render();toast("🏆 Boss completed • +"+reward+" XP");
  }
 }
 function editBoss(id){
@@ -281,6 +290,7 @@ function editBoss(id){
  <div id="editTimeFields" style="margin-top:10px;display:${type==="time"?"block":"none"}">
    <div class="two"><div><div class="label">Start date</div><input id="editBossStart" type="date" value="${b.start||today()}"></div>
    <div><div class="label">End date</div><input id="editBossEnd" type="date" value="${b.end||today()}"></div></div>
+   <div style="margin-top:8px"><div class="label">XP reward on completion</div><input id="editBossTimeXp" type="number" min="1" step="25" value="${b.rewardXp||1000}"></div>
    <div class="note" style="margin-top:9px">Example: start Monday 10 August, end Sunday 6 September.</div>
  </div>
  <div class="note" style="margin-top:12px">Current progress is preserved. For a time boss, completion is recorded when the end date has passed.</div>
@@ -297,9 +307,10 @@ function saveBossEdit(id){
    if(g<100)return toast("XP goal must be at least 100");
    b.type="xp";b.name=n;b.goal=g;b.skill=s;delete b.start;delete b.end;delete b.status;
  }else{
-   let st=document.getElementById("editBossStart").value,en=document.getElementById("editBossEnd").value;
+   let st=document.getElementById("editBossStart").value,en=document.getElementById("editBossEnd").value,reward=Number(document.getElementById("editBossTimeXp").value);
    if(!st||!en||en<st)return toast("Choose a valid start and end date");
-   b.type="time";b.name=n;b.start=st;b.end=en;b.status=(b.status==="failed"?"failed":(b.status==="completed"?"completed":undefined));
+   if(reward<1)return toast("Enter an XP reward of at least 1");
+   b.type="time";b.name=n;b.start=st;b.end=en;b.rewardXp=reward;b.status=(b.status==="failed"?"failed":(b.status==="completed"?"completed":"active"));
    delete b.goal;delete b.skill;delete b.progress;
  }
  save();closeLevel();render();toast("Boss updated");
@@ -318,11 +329,12 @@ function addBoss(){
    if(g<100)return toast("Give the boss a goal of at least 100 XP");
    state.bosses.push({id:"b"+Date.now(),type:"xp",name:n,skill:s,goal:g,progress:0});
  }else{
-   let st=document.getElementById("bossStart").value,en=document.getElementById("bossEnd").value;
+   let st=document.getElementById("bossStart").value,en=document.getElementById("bossEnd").value,reward=Number(document.getElementById("bossTimeXp").value);
    if(!st||!en||en<st)return toast("Choose a valid start and end date");
-   state.bosses.push({id:"b"+Date.now(),type:"time",name:n,start:st,end:en,status:"active"});
+   if(reward<1)return toast("Enter an XP reward of at least 1");
+   state.bosses.push({id:"b"+Date.now(),type:"time",name:n,start:st,end:en,rewardXp:reward,status:"active"});
  }
- document.getElementById("bossName").value="";document.getElementById("bossGoal").value="";document.getElementById("bossStart").value="";document.getElementById("bossEnd").value="";
+ document.getElementById("bossName").value="";document.getElementById("bossGoal").value="";document.getElementById("bossStart").value="";document.getElementById("bossEnd").value="";document.getElementById("bossTimeXp").value="";
  save();render();toast("Boss created");
 }
 function openBoss(id){let b=state.bosses.find(x=>x.id===id);if(!b)return;document.getElementById("levelTitle").textContent="⚔️ "+b.name;let pct=Math.min(100,b.progress/b.goal*100);document.getElementById("levelBody").innerHTML=`<div class="boss"><div class="bossmeta">${esc(b.skill)}</div><div class="big goldtxt" style="font-size:34px">${Math.round(pct)}%</div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div>${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><div class="note">Any XP you earn in <b>${esc(b.skill)}</b> also damages this boss. The boss is defeated when the bar reaches 100%.</div>`;document.getElementById("levelModal").classList.add("show")}
