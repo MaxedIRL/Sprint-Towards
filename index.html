@@ -107,7 +107,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:6,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:7,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
@@ -188,7 +188,31 @@ function addCustom(){let n=document.getElementById("customName").value.trim(),x=
 function addXp(skill,xp,name){xp=Number(xp);state.skills[skill].xp+=xp;state.skills[skill].history.unshift({date:today(),name,xp});state.activities.unshift({date:today(),name,skill,xp});state.bosses.forEach(b=>{if(b.skill===skill&&b.progress<b.goal)b.progress=Math.min(b.goal,b.progress+xp)});checkAchievements();save()}
 function showSkill(s){let d=state.skills[s],l=level(d.xp),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(d.xp-prev)/(next-prev)*100);let icon=SKILLS.find(x=>x[0]===s)?.[1]||"⭐";document.getElementById("skillDetail").innerHTML=`<h2>${icon} ${esc(s)}</h2><div class="row"><b style="font-size:28px">Level ${l}</b><span class="goldtxt">${d.xp.toLocaleString()} XP</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${Math.max(0,next-d.xp).toLocaleString()} XP to Level ${l+1}</div><div style="margin-top:14px"><div class="label">Add activity</div><div class="formrow" style="margin-top:7px"><input id="skillName" placeholder="What did you do?"><input id="skillXp" type="number" min="1" placeholder="XP"></div><div class="actions"><button class="primary" onclick="addFromSkill('${esc(s)}')">+ Add XP</button></div></div><div style="margin-top:14px"><div class="label">Recent XP</div>${d.history.slice(0,12).map(h=>`<div class="activity"><div class="row"><span>${esc(h.name)}</span><span class="xpplus">+${h.xp}</span></div><div class="small">${h.date}</div></div>`).join("")||'<div class="small">No activity yet.</div>'}</div>`}
 function addFromSkill(s){let n=document.getElementById("skillName").value.trim(),x=Number(document.getElementById("skillXp").value);if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);render();showSkill(s);toast("+"+x+" XP • "+s)}
-function renderBosses(){let html=state.bosses.map(b=>{let pct=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><div><div class="bossname">⚔️ ${esc(b.name)}</div><div class="bossmeta">${esc(b.skill)} • ${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><b class="goldtxt">${Math.round(pct)}%</b></div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div class="actions">${b.progress>=b.goal?'<button class="gold" disabled>🏆 Defeated</button>':'<button class="primary" onclick="openBoss(\''+esc(b.id)+'\')">View Boss</button>'}</div></div>`}).join("");document.getElementById("bossList").innerHTML=html||'<div class="card"><div class="small">No bosses yet.</div></div>';document.getElementById("homeBosses").innerHTML=state.bosses.slice(0,3).map(b=>{let p=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><b>⚔️ ${esc(b.name)}</b><span>${Math.round(p)}%</span></div><div class="bossbar"><div class="bossfill" style="width:${p}%"></div></div><div class="bossmeta">${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div>`}).join("")}
+function renderBosses(){let html=state.bosses.map(b=>{let pct=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><div><div class="bossname">⚔️ ${esc(b.name)}</div><div class="bossmeta">${esc(b.skill)} • ${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><b class="goldtxt">${Math.round(pct)}%</b></div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div class="actions">
+${b.progress>=b.goal?'<button class="gold" disabled>🏆 Defeated</button>':'<button class="primary" onclick="openBoss(\''+esc(b.id)+'\')">View Boss</button>'}
+<button onclick="editBoss(\''+esc(b.id)+'\')">Edit</button>
+<button class="danger" onclick="deleteBoss(\''+esc(b.id)+'\')">Delete</button>
+</div></div>`}).join("");document.getElementById("bossList").innerHTML=html||'<div class="card"><div class="small">No bosses yet.</div></div>';document.getElementById("homeBosses").innerHTML=state.bosses.slice(0,3).map(b=>{let p=Math.min(100,b.progress/b.goal*100);return `<div class="boss"><div class="row"><b>⚔️ ${esc(b.name)}</b><span>${Math.round(p)}%</span></div><div class="bossbar"><div class="bossfill" style="width:${p}%"></div></div><div class="bossmeta">${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div>`}).join("")}
+function editBoss(id){
+ let b=state.bosses.find(x=>x.id===id);if(!b)return;
+ document.getElementById("levelTitle").textContent="✏️ Edit Boss";
+ document.getElementById("levelBody").innerHTML=`<input id="editBossName" value="${esc(b.name)}" placeholder="Boss name">
+ <div class="two" style="margin-top:8px"><input id="editBossGoal" type="number" min="100" value="${b.goal}"><select id="editBossSkill">${SKILLS.map(([s])=>`<option ${s===b.skill?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+ <div class="note" style="margin-top:10px">Current progress: ${b.progress.toLocaleString()} XP. Changing the XP goal does not erase progress.</div>
+ <div class="actions"><button class="primary" onclick="saveBossEdit('${esc(id)}')">Save changes</button><button onclick="closeLevel()">Cancel</button></div>`;
+ document.getElementById("levelModal").classList.add("show");
+}
+function saveBossEdit(id){
+ let b=state.bosses.find(x=>x.id===id);if(!b)return;
+ let n=document.getElementById("editBossName").value.trim(),g=Number(document.getElementById("editBossGoal").value),s=document.getElementById("editBossSkill").value;
+ if(!n||g<100)return toast("Give the boss a name and a goal of at least 100 XP");
+ b.name=n;b.goal=g;b.skill=s;save();closeLevel();render();toast("Boss updated");
+}
+function deleteBoss(id){
+ let b=state.bosses.find(x=>x.id===id);if(!b)return;
+ if(!confirm(`Delete "${b.name}"? Its progress will be removed, but XP already earned stays on your character.`))return;
+ state.bosses=state.bosses.filter(x=>x.id!==id);save();render();toast("Boss deleted");
+}
 function addBoss(){let n=document.getElementById("bossName").value.trim(),g=Number(document.getElementById("bossGoal").value),s=document.getElementById("bossSkill").value;if(!n||g<100)return toast("Give your boss a name and at least 100 XP");state.bosses.push({id:"b"+Date.now(),name:n,skill:s,goal:g,progress:0});document.getElementById("bossName").value="";document.getElementById("bossGoal").value="";save();render();toast("Boss created")}
 function openBoss(id){let b=state.bosses.find(x=>x.id===id);if(!b)return;document.getElementById("levelTitle").textContent="⚔️ "+b.name;let pct=Math.min(100,b.progress/b.goal*100);document.getElementById("levelBody").innerHTML=`<div class="boss"><div class="bossmeta">${esc(b.skill)}</div><div class="big goldtxt" style="font-size:34px">${Math.round(pct)}%</div><div class="bossbar"><div class="bossfill" style="width:${pct}%"></div></div><div>${b.progress.toLocaleString()} / ${b.goal.toLocaleString()} XP</div></div><div class="note">Any XP you earn in <b>${esc(b.skill)}</b> also damages this boss. The boss is defeated when the bar reaches 100%.</div>`;document.getElementById("levelModal").classList.add("show")}
 function closeLevel(){document.getElementById("levelModal").classList.remove("show")}
