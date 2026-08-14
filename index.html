@@ -25,8 +25,34 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 @media(min-width:620px){.skillgrid{grid-template-columns:repeat(3,1fr)}}
 </style>
 
+
+
 <style>
-.bottomnav,.bottom-nav,.nav{grid-template-columns:repeat(6,1fr)!important}
+.bottomnav,.bottom-nav,.nav{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  width:100%!important;
+  gap:0!important;
+  align-items:center!important;
+  padding:6px 4px!important;
+}
+.bottomnav .navbtn,.bottom-nav .navbtn,.nav .navbtn{
+  min-width:0!important;
+  width:100%!important;
+  padding:5px 2px!important;
+  margin:0!important;
+  font-size:11px!important;
+  gap:2px!important;
+  white-space:nowrap!important;
+}
+.bottomnav .navbtn span,.bottom-nav .navbtn span,.nav .navbtn span{
+  font-size:22px!important;
+  line-height:1!important;
+}
+.bottomnav .navbtn small,.bottom-nav .navbtn small,.nav .navbtn small{
+  font-size:11px!important;
+  line-height:1.1!important;
+}
 </style>
 </head>
 <body>
@@ -120,7 +146,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:13,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:14,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
