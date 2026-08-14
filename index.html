@@ -24,10 +24,14 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 .note{padding:10px;border:1px solid var(--line);border-radius:10px;background:#0d131b;font-size:12px;color:var(--muted);line-height:1.45}
 @media(min-width:620px){.skillgrid{grid-template-columns:repeat(3,1fr)}}
 </style>
+
+<style>
+.bottomnav,.bottom-nav,.nav{grid-template-columns:repeat(6,1fr)!important}
+</style>
 </head>
 <body>
 <div class="app">
-<header><div><div class="title">⚔️ Life RPG</div></div><button onclick="openSettings()">⚙️</button></header>
+
 
 <section id="home" class="view active">
 <div class="hero">
@@ -83,7 +87,7 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 <button class="tab" data-view="quests"><span class="ico">📜</span>Quests</button>
 <button class="tab" data-view="bosses"><span class="ico">⚔️</span>Bosses</button>
 <button class="tab" data-view="diary"><span class="ico">📖</span>Diary</button>
-</nav>
+<button class="navbtn" data-view="settings" onclick="showView('settings')"><span>⚙️</span><small>Settings</small></button></nav>
 
 <div class="modal" id="settingsModal"><div class="sheet"><div class="sheethead"><h2>⚙️ Settings & Backup</h2><button onclick="closeSettings()">✕</button></div>
 <p class="small">Your character data lives in this browser. Export a backup before making major changes or clearing Safari data.</p>
@@ -116,7 +120,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:12,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:13,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
