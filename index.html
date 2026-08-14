@@ -18,7 +18,7 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}.label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.big{font-size:42px;font-weight:900;line-height:1.05}.goldtxt{color:var(--gold)}.greentxt{color:var(--green)}h2{font-size:18px;margin:2px 0 12px}.small{font-size:12px;color:var(--muted)}
 .bar{height:9px;background:#090d12;border:1px solid #27313d;border-radius:99px;overflow:hidden;margin:8px 0 6px}.fill{height:100%;background:linear-gradient(90deg,var(--green),#a8ebc2);transition:width .3s}
 .skillgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.skill{padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;cursor:pointer}.skilltop{display:flex;justify-content:space-between;gap:6px}.skillname{font-weight:800}.lv{color:var(--gold);font-weight:900}.quest,.activity,.bossrow,.achievement{border-top:1px solid var(--line);padding:12px 0}.quest:first-child,.activity:first-child,.bossrow:first-child,.achievement:first-child{border-top:0}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.qtext{flex:1}.qname{font-weight:750}.tag{font-size:11px;color:var(--muted);margin-top:2px}.xpplus{color:var(--green);font-weight:900}.boss{padding:14px;background:linear-gradient(135deg,#21192a,#15131e);border:1px solid #453351;border-radius:14px;margin-bottom:10px}.bossname{font-weight:900;font-size:17px}.bossmeta{color:#bda9ce;font-size:11px}.bossbar{height:12px;background:#0b0a0f;border-radius:99px;overflow:hidden;border:1px solid #3a2c43;margin:8px 0}.bossfill{height:100%;background:linear-gradient(90deg,#9d65d7,#d19cf5)}.formrow{display:grid;grid-template-columns:1fr 105px;gap:8px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}input,textarea,select{width:100%;background:#0c1219;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}textarea{min-height:135px;resize:vertical}
-.tabs{position:fixed;z-index:20;bottom:0;left:0;right:0;margin:auto;max-width:780px;background:rgba(8,12,17,.97);backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:7px max(7px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr)}.tab{border:0;background:none;color:var(--muted);font-size:10px;padding:6px 2px}.tab.active{color:var(--gold)}.ico{display:block;font-size:19px;margin-bottom:2px}
+.tabs{position:fixed;z-index:20;bottom:0;left:0;right:0;margin:auto;max-width:780px;background:rgba(8,12,17,.97);backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:7px max(7px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(6,1fr)}.tab{border:0;background:none;color:var(--muted);font-size:10px;padding:6px 2px}.tab.active{color:var(--gold)}.ico{display:block;font-size:19px;margin-bottom:2px}
 .modal{position:fixed;z-index:30;inset:0;background:#0009;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px;width:100%;max-height:88vh;overflow:auto}.sheethead{display:flex;justify-content:space-between;align-items:center}
 .toast{position:fixed;z-index:40;left:50%;bottom:95px;transform:translate(-50%,20px);opacity:0;background:#17301f;border:1px solid #3d704f;color:#c8f3d4;border-radius:12px;padding:11px 15px;transition:.25s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
 .note{padding:10px;border:1px solid var(--line);border-radius:10px;background:#0d131b;font-size:12px;color:var(--muted);line-height:1.45}
@@ -27,33 +27,6 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 
 
 
-<style>
-.bottomnav,.bottom-nav,.nav{
-  display:grid!important;
-  grid-template-columns:repeat(6,minmax(0,1fr))!important;
-  width:100%!important;
-  gap:0!important;
-  align-items:center!important;
-  padding:6px 4px!important;
-}
-.bottomnav .navbtn,.bottom-nav .navbtn,.nav .navbtn{
-  min-width:0!important;
-  width:100%!important;
-  padding:5px 2px!important;
-  margin:0!important;
-  font-size:11px!important;
-  gap:2px!important;
-  white-space:nowrap!important;
-}
-.bottomnav .navbtn span,.bottom-nav .navbtn span,.nav .navbtn span{
-  font-size:22px!important;
-  line-height:1!important;
-}
-.bottomnav .navbtn small,.bottom-nav .navbtn small,.nav .navbtn small{
-  font-size:11px!important;
-  line-height:1.1!important;
-}
-</style>
 </head>
 <body>
 <div class="app">
@@ -113,7 +86,7 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 <button class="tab" data-view="quests"><span class="ico">📜</span>Quests</button>
 <button class="tab" data-view="bosses"><span class="ico">⚔️</span>Bosses</button>
 <button class="tab" data-view="diary"><span class="ico">📖</span>Diary</button>
-<button class="navbtn" data-view="settings" onclick="showView('settings')"><span>⚙️</span><small>Settings</small></button></nav>
+<button class="tab" type="button" onclick="openSettings()"><span class="ico">⚙️</span>Settings</button></nav>
 
 <div class="modal" id="settingsModal"><div class="sheet"><div class="sheethead"><h2>⚙️ Settings & Backup</h2><button onclick="closeSettings()">✕</button></div>
 <p class="small">Your character data lives in this browser. Export a backup before making major changes or clearing Safari data.</p>
@@ -203,27 +176,6 @@ function addTodo(){
  state.todos.unshift({id:"t"+Date.now(),name:n,skill:s,xp:x,completed:false,created:today(),completedDate:null});
  document.getElementById("todoName").value="";document.getElementById("todoXp").value="";
  save();render();toast("To-do added");
-}
-function completeQuestRow(i){
- let done=state.done[today()]||[];
- let defaults=DEFAULT_QUESTS.map((q,idx)=>({name:q[0],skill:q[1],xp:q[2],kind:"daily",idx,done:done.includes(idx)})).filter(q=>!state.disabledDefaults.includes(q.idx));
- let rows=defaults.concat(state.todos.map(t=>({...t,kind:"todo",done:t.completed})));
- let q=rows[i];if(!q||q.done)return;
- if(q.kind==="daily"){completeQuest(q.idx);return}
- let todo=state.todos.find(t=>t.id===q.id);if(!todo||todo.completed)return;
- addXp(todo.skill,todo.xp,todo.name);todo.completed=true;todo.completedDate=today();
- save();render();toast("+"+todo.xp+" XP • "+todo.skill);
-}
-function completeQuestRow(i){
- let done=state.done[today()]||[];
- let defaults=DEFAULT_QUESTS.map((q,idx)=>({name:q[0],skill:q[1],xp:q[2],kind:"daily",idx,done:done.includes(idx)}));
- let rows=defaults.concat(state.todos.map(t=>({...t,kind:"todo",done:t.completed})));
- let q=rows[i]; if(!q||q.done)return;
- if(q.kind==="daily"){completeQuest(q.idx);return}
- let todo=state.todos.find(t=>t.id===q.id);if(!todo||todo.completed)return;
- addXp(todo.skill,todo.xp,todo.name);
- todo.completed=true;todo.completedDate=today();
- save();render();toast("+"+todo.xp+" XP • "+todo.skill);
 }
 function completeQuest(i){let done=state.done[today()]||[];if(done.includes(i))return;let q=DEFAULT_QUESTS[i];addXp(q[1],q[2],q[0]);done.push(i);state.done[today()]=done;save();render();toast("+"+q[2]+" XP • "+q[1])}
 function addCustom(){let n=document.getElementById("customName").value.trim(),x=Number(document.getElementById("customXp").value),s=document.getElementById("customSkill").value;if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);document.getElementById("customName").value="";document.getElementById("customXp").value="";render();toast("+"+x+" XP • "+s)}
