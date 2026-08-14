@@ -27,7 +27,7 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 </head>
 <body>
 <div class="app">
-<header><div><div class="title">⚔️ Life RPG</div><div class="subtitle">Build your character in the real world.</div></div><button onclick="openSettings()">⚙️</button></header>
+<header><div><div class="title">⚔️ Life RPG</div></div><button onclick="openSettings()">⚙️</button></header>
 
 <section id="home" class="view active">
 <div class="hero">
@@ -116,7 +116,7 @@ const DEFAULT_QUESTS=[
 ];
 const blank=Object.fromEntries(SKILLS.map(([s])=>[s,{xp:0,history:[]}]));
 let state=JSON.parse(localStorage.getItem("lifeRPGBest")||"null")||{
- version:11,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
+ version:12,skills:blank,activities:[],diary:{},done:{},achievements:[],todos:[],disabledDefaults:[],
  bosses:[
   {id:"b1",name:"First Boss: Build Momentum",skill:"Personal Goals",goal:1000,progress:0},
   {id:"b2",name:"Home Base Upgrade",skill:"DIY & Home Projects",goal:2500,progress:0},
