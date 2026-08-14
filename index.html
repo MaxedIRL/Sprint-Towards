@@ -80,20 +80,39 @@ header{padding:17px 3px 13px;display:flex;justify-content:space-between;align-it
 </section>
 </div>
 
+<section id="settings" class="view">
+<div class="card">
+  <h2>⚙️ Settings</h2>
+  <div class="small">Manage your character data and backups. Your progress is stored in this browser.</div>
+</div>
+
+<div class="card">
+  <h2>💾 Data & Backup</h2>
+  <div class="note">Export a backup regularly, especially before clearing Safari data or making major changes to the app.</div>
+  <div class="actions">
+    <button class="primary" onclick="exportData()">💾 Export Data</button>
+    <button onclick="document.getElementById('settingsImportFile').click()">📥 Import Data</button>
+    <input id="settingsImportFile" type="file" accept=".json,application/json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧙 Character</h2>
+  <div class="note">Resetting your character permanently removes the data currently stored in this browser. Export a backup first if you may want to restore it.</div>
+  <div class="actions">
+    <button class="danger" onclick="resetData()">Reset Character</button>
+  </div>
+</div>
+</section>
+
 <nav class="tabs">
 <button class="tab active" data-view="home"><span class="ico">🏠</span>Home</button>
 <button class="tab" data-view="skills"><span class="ico">📊</span>Skills</button>
 <button class="tab" data-view="quests"><span class="ico">📜</span>Quests</button>
 <button class="tab" data-view="bosses"><span class="ico">⚔️</span>Bosses</button>
 <button class="tab" data-view="diary"><span class="ico">📖</span>Diary</button>
-<button class="tab" type="button" onclick="openSettings()"><span class="ico">⚙️</span>Settings</button></nav>
+<button class="tab" data-view="settings"><span class="ico">⚙️</span>Settings</button></nav>
 
-<div class="modal" id="settingsModal"><div class="sheet"><div class="sheethead"><h2>⚙️ Settings & Backup</h2><button onclick="closeSettings()">✕</button></div>
-<p class="small">Your character data lives in this browser. Export a backup before making major changes or clearing Safari data.</p>
-<div class="actions"><button class="primary" onclick="exportData()">💾 Export Backup</button><button onclick="document.getElementById('importFile').click()">📥 Import Backup</button><input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)"></div>
-<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
-<div class="label">Character management</div><div class="actions"><button class="danger" onclick="resetData()">Reset character</button></div>
-</div></div>
 <div class="modal" id="levelModal"><div class="sheet"><div class="sheethead"><h2 id="levelTitle"></h2><button onclick="closeLevel()">✕</button></div><div id="levelBody"></div></div></div>
 <div id="toast" class="toast"></div>
 
@@ -326,7 +345,6 @@ function renderDiary(){let d=today();document.getElementById("diaryDate").textCo
 function checkAchievements(){state.achievements=state.achievements||[];[[500,"First 500 XP"],[1000,"First 1,000 XP"],[5000,"First 5,000 XP"],[10000,"First 10,000 XP"]].forEach(([n,t])=>{if(totalXp()>=n&&!state.achievements.includes(t))state.achievements.push(t)});state.bosses.forEach(b=>{if(b.progress>=b.goal){let t="Boss defeated: "+b.name;if(!state.achievements.includes(t))state.achievements.push(t)}})}
 function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="life-rpg-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);toast("Backup exported")}
 function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d.skills||!d.activities||!d.diary)throw 0;state=d;save();render();toast("Backup restored")}catch{toast("That backup is not valid")}};r.readAsText(f)}
-function openSettings(){document.getElementById("settingsModal").classList.add("show")}function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
 function resetData(){if(confirm("Reset your entire character and diary? This cannot be undone unless you have a backup.")){localStorage.removeItem("lifeRPGBest");location.reload()}}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function toast(t){let e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1700)}
