@@ -160,6 +160,19 @@ function ensure(){
  if(!state.disabledDefaults)state.disabledDefaults=[];
  if(!state.skills)state.skills={};
  if(!state.legacySkills)state.legacySkills={};
+ // Give older XP records IDs so individual entries can be deleted.
+ (state.activities||[]).forEach(a=>{if(!a.id)a.id="x"+Date.now()+Math.random().toString(36).slice(2,8)});
+ SKILLS.forEach(([skill])=>{
+   let hist=state.skills[skill]?.history||[];
+   hist.forEach(h=>{
+     if(!h.id){
+       let match=(state.activities||[]).find(a=>a.skill===skill&&a.date===h.date&&a.name===h.name&&Number(a.xp)===Number(h.xp)&&!a._linked);
+       if(match){h.id=match.id;match._linked=true}
+       else h.id="x"+Date.now()+Math.random().toString(36).slice(2,8);
+     }
+   });
+ });
+ (state.activities||[]).forEach(a=>delete a._linked);
  ["Creativity","Life Admin"].forEach(s=>{
    if(state.skills[s]){
      state.legacySkills[s]=state.skills[s];
@@ -198,8 +211,21 @@ function addTodo(){
 }
 function completeQuest(i){let done=state.done[today()]||[];if(done.includes(i))return;let q=DEFAULT_QUESTS[i];addXp(q[1],q[2],q[0]);done.push(i);state.done[today()]=done;save();render();toast("+"+q[2]+" XP • "+q[1])}
 function addCustom(){let n=document.getElementById("customName").value.trim(),x=Number(document.getElementById("customXp").value),s=document.getElementById("customSkill").value;if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);document.getElementById("customName").value="";document.getElementById("customXp").value="";render();toast("+"+x+" XP • "+s)}
-function addXp(skill,xp,name){xp=Number(xp);state.skills[skill].xp+=xp;state.skills[skill].history.unshift({date:today(),name,xp});state.activities.unshift({date:today(),name,skill,xp});state.bosses.forEach(b=>{if(b.skill===skill&&b.progress<b.goal)b.progress=Math.min(b.goal,b.progress+xp)});checkAchievements();save()}
-function showSkill(s){let d=state.skills[s],l=level(d.xp),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(d.xp-prev)/(next-prev)*100);let icon=SKILLS.find(x=>x[0]===s)?.[1]||"⭐";document.getElementById("skillDetail").innerHTML=`<h2>${icon} ${esc(s)}</h2><div class="row"><b style="font-size:28px">Level ${l}</b><span class="goldtxt">${d.xp.toLocaleString()} XP</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${Math.max(0,next-d.xp).toLocaleString()} XP to Level ${l+1}</div><div style="margin-top:14px"><div class="label">Add activity</div><div class="formrow" style="margin-top:7px"><input id="skillName" placeholder="What did you do?"><input id="skillXp" type="number" min="1" placeholder="XP"></div><div class="actions"><button class="primary" onclick="addFromSkill('${esc(s)}')">+ Add XP</button></div></div><div style="margin-top:14px"><div class="label">Recent XP</div>${d.history.slice(0,12).map(h=>`<div class="activity"><div class="row"><span>${esc(h.name)}</span><span class="xpplus">+${h.xp}</span></div><div class="small">${h.date}</div></div>`).join("")||'<div class="small">No activity yet.</div>'}</div>`}
+function addXp(skill,xp,name){xp=Number(xp);state.skills[skill].xp+=xp;let entryId="x"+Date.now()+Math.random().toString(36).slice(2,8);state.skills[skill].history.unshift({id:entryId,date:today(),name,xp});state.activities.unshift({id:entryId,date:today(),name,skill,xp});state.bosses.forEach(b=>{if(b.skill===skill&&b.progress<b.goal)b.progress=Math.min(b.goal,b.progress+xp)});checkAchievements();save()}
+function showSkill(s){let d=state.skills[s],l=level(d.xp),next=xpForLevel(l+1),prev=xpForLevel(l),pct=next===prev?0:Math.min(100,(d.xp-prev)/(next-prev)*100);let icon=SKILLS.find(x=>x[0]===s)?.[1]||"⭐";document.getElementById("skillDetail").innerHTML=`<h2>${icon} ${esc(s)}</h2><div class="row"><b style="font-size:28px">Level ${l}</b><span class="goldtxt">${d.xp.toLocaleString()} XP</span></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="small">${Math.max(0,next-d.xp).toLocaleString()} XP to Level ${l+1}</div><div style="margin-top:14px"><div class="label">Add activity</div><div class="formrow" style="margin-top:7px"><input id="skillName" placeholder="What did you do?"><input id="skillXp" type="number" min="1" placeholder="XP"></div><div class="actions"><button class="primary" onclick="addFromSkill('${esc(s)}')">+ Add XP</button></div></div><div style="margin-top:14px"><div class="label">Recent XP</div>${d.history.slice(0,12).map(h=>`<div class="activity"><div class="row"><span>${esc(h.name)}</span><span class="xpplus">+${h.xp}</span></div><div class="row" style="margin-top:5px"><div class="small">${h.date}</div><button class="danger" style="padding:5px 8px;font-size:11px" onclick="deleteXpEntry('${esc(h.id)}','${esc(s)}')">Delete</button></div></div>`).join("")||'<div class="small">No activity yet.</div>'}</div>`}
+function deleteXpEntry(id,skill){
+ let d=state.skills[skill];if(!d)return;
+ let h=d.history.find(x=>x.id===id);if(!h)return toast("XP entry could not be found");
+ let xp=Number(h.xp)||0;
+ if(!confirm("Delete \""+h.name+"\" and remove "+xp.toLocaleString()+" XP from "+skill+"?"))return;
+ d.xp=Math.max(0,d.xp-xp);
+ d.history=d.history.filter(x=>x.id!==id);
+ state.activities=state.activities.filter(a=>a.id!==id);
+ state.bosses.forEach(b=>{
+   if((b.type||"xp")==="xp"&&b.skill===skill)b.progress=Math.max(0,(Number(b.progress)||0)-xp);
+ });
+ save();render();showSkill(skill);toast("-"+xp+" XP • "+skill);
+}
 function addFromSkill(s){let n=document.getElementById("skillName").value.trim(),x=Number(document.getElementById("skillXp").value);if(!n||x<1)return toast("Enter an activity and XP");addXp(s,x,n);render();showSkill(s);toast("+"+x+" XP • "+s)}
 function formatDate(d){
  if(!d)return "";
